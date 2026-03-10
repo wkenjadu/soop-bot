@@ -4,7 +4,7 @@ const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder
 
 // --- 환경 설정 ---
 const TOKEN = process.env.DISCORD_TOKEN; 
-const CHANNEL_ID = "416629447383318528"; // 입력하신 채널 ID 그대로 유지
+const CHANNEL_ID = "469136086388441088"; // 입력하신 채널 ID 그대로 유지
 const BJ_ID = "breezy25";
 const BJ_NAME = "숩니찡";
 const STATUS_FILE = "status.txt"; // 👈 이 줄이 꼭 있어야 에러가 안 납니다!
@@ -83,3 +83,4 @@ async function checkStream() {
 }
 
 checkStream();
+
