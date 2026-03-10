@@ -2,7 +2,7 @@ name: SOOP Live Checker
 
 on:
   schedule:
-    - cron: '*/5 * * * *'  # 5분마다 자동 실행
+    - cron: '*/3 * * * *'  # 3분마다 자동 실행
   workflow_dispatch:      # 수동 실행 버튼 활성화
 
 jobs:
