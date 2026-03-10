@@ -36,15 +36,22 @@ async function checkStream() {
       const title = broadData.broad_title || "방송 중입니다!";
       const thumbnail = `https://liveimg.afreecatv.com/m/${broadData.broad_no}.jpg?${Date.now()}`;
 
-      await axios.post(WEBHOOK, {
-        content: "@everyone 🔴 **숩니찡** 방송 시작!",
+await axios.post(WEBHOOK, {
+        content: "@everyone 🔴 실시간 스트리밍 ON",
         embeds: [{
-          title: `방송 보러가기 (클릭)`,
+          title: `🔗 방송 보러가기 바로가기`, // 제목을 버튼 문구처럼 변경
           description: `📺 **${title}**`,
-          url: `https://play.sooplive.co.kr/${BJ_ID}`,
+          url: `https://play.sooplive.co.kr/${BJ_ID}`, // 제목을 누르면 바로 이동
           image: { url: thumbnail },
           color: 16711680,
-          footer: { text: "SOOP Live Notification" },
+          fields: [
+            {
+              name: "\u200b", // 빈 공간을 만들어 구분선 효과
+              value: `[**▶️ 방송국 바로가기 클릭**](https://play.sooplive.co.kr/${BJ_ID})`, 
+              inline: false
+            }
+          ],
+          footer: { text: "SOOP Live Checker" },
           timestamp: new Date()
         }]
       });
@@ -60,3 +67,4 @@ async function checkStream() {
 }
 
 checkStream();
+
