@@ -43,7 +43,7 @@ await axios.post(WEBHOOK, {
           description: `📺 **${title}**`,
           url: `https://play.sooplive.co.kr/${BJ_ID}`, // 제목을 누르면 바로 이동
           image: { url: thumbnail },
-          color: 16711680,
+          color: 0xD59EE8,
           fields: [
             {
               name: "\u200b", // 빈 공간을 만들어 구분선 효과
@@ -67,4 +67,5 @@ await axios.post(WEBHOOK, {
 }
 
 checkStream();
+
 
