@@ -2,8 +2,8 @@ name: SOOP Live Checker
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
-  workflow_dispatch:
+    - cron: '*/5 * * * *'  # 5분마다 자동 실행
+  workflow_dispatch:      # 수동 실행 버튼 활성화
 
 jobs:
   check:
@@ -15,13 +15,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+          
       - run: npm install
-      - run: node soop.js
+      
+      - name: Run node soop.js
+        run: node soop.js
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          # 여기서 GitHub Secrets에 저장한 이름들을 연결해줘야 합니다!
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+          
       - name: Save Status
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add status.txt
+          # 상태 변화가 있을 때만 업데이트합니다.
           git diff --quiet && git diff --staged --quiet || (git commit -m "update status" && git push)
