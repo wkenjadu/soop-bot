@@ -3,8 +3,8 @@ const fs = require("fs");
 const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 
-const TOKEN = process.env.DISCORD_TOKEN; // 토큰은 그대로 두세요!
-const CHANNEL_ID = "416629447383318528"; // 👈 여기에 실제 채널 ID 숫자를 직접 넣으세요!
+const TOKEN = process.env.DISCORD_TOKEN; // 이건 그대로 두세요!
+const CHANNEL_ID = "416629447383318528"; // 👈 여기에 아까 복사한 숫자만 따옴표 안에 넣으세요.
 const BJ_ID = "breezy25";
 const BJ_NAME = "숩니찡";
 const STATUS_FILE = "status.txt";
@@ -76,4 +76,5 @@ async function checkStream() {
 }
 
 checkStream();
+
 
