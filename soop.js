@@ -37,7 +37,7 @@ async function checkStream() {
       const thumbnail = `https://liveimg.afreecatv.com/m/${broadData.broad_no}.jpg?${Date.now()}`;
 
 await axios.post(WEBHOOK, {
-        content: "@everyone 🔴 실시간 스트리밍 ON",
+        content: "@everyone 🟣 실시간 스트리밍 ON 🟣",
         embeds: [{
           title: `🔗 방송 보러가기 바로가기`, // 제목을 버튼 문구처럼 변경
           description: `📺 **${title}**`,
@@ -67,5 +67,6 @@ await axios.post(WEBHOOK, {
 }
 
 checkStream();
+
 
 
