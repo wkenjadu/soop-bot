@@ -17,10 +17,12 @@ client.once("ready", () => {
   console.log(`🤖 봇 로그인 완료: ${client.user.tag}`);
 });
 
+// 방송 체크 함수
 async function checkStream() {
   try {
 
     let wasLive = false;
+
     if (fs.existsSync(STATUS_FILE)) {
       wasLive = fs.readFileSync(STATUS_FILE, "utf8").trim() === "true";
     }
@@ -40,12 +42,17 @@ async function checkStream() {
 
     console.log(`[체크] 방송 상태: ${isLive ? "ON" : "OFF"}`);
 
+    // 방송 시작 감지
     if (isLive && !wasLive) {
 
       const channel = await client.channels.fetch(CHANNEL_ID);
 
       const title = broadData.broad_title || "방송 시작!";
-      const thumbnail = `https://liveimg.afreecatv.com/m/${broadData.broad_no}.jpg?${Date.now()}`;
+      const category = broadData.broad_cate_name || "카테고리 없음";
+
+      // 썸네일 자동 갱신
+      const thumbnail =
+        `https://liveimg.afreecatv.com/m/${broadData.broad_no}.jpg?cache=${Date.now()}`;
 
       const embed = new EmbedBuilder()
         .setColor(0xD59EE8)
@@ -55,6 +62,13 @@ async function checkStream() {
         })
         .setTitle(`💜 ${title}`)
         .setURL(`https://play.sooplive.co.kr/${BJ_ID}`)
+        .addFields(
+          {
+            name: "📂 방송 카테고리",
+            value: category,
+            inline: true
+          }
+        )
         .setImage(thumbnail)
         .setFooter({ text: "SOOP Live Checker" })
         .setTimestamp();
@@ -75,6 +89,12 @@ async function checkStream() {
       console.log("✅ 방송 시작 알림 전송 완료!");
     }
 
+    // 방송 종료 감지
+    if (!isLive && wasLive) {
+      console.log("🔴 방송 종료 감지");
+    }
+
+    // 상태 저장
     fs.writeFileSync(STATUS_FILE, isLive.toString());
 
   } catch (e) {
@@ -85,8 +105,13 @@ async function checkStream() {
 // 봇 로그인
 client.login(TOKEN);
 
-// 30초마다 방송 체크
-setInterval(checkStream, 30000);
+// 봇 준비되면 체크 시작
+client.once("ready", () => {
 
-// 시작할 때 한번 체크
-checkStream();
+  checkStream(); // 시작할 때 한번
+
+  setInterval(() => {
+    checkStream();
+  }, 30000); // 30초마다 체크
+
+});
