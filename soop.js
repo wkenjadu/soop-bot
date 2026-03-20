@@ -137,10 +137,11 @@ if (!TOKEN) {
   console.log("❌ DISCORD_TOKEN 없음");
 } else {
   console.log("🔑 토큰 확인됨, 로그인 시도");
-  client.login(TOKEN)
-    .then(() => {
-      console.log("✅ login() 호출 성공");
-    })
+client.login(TOKEN);
+
+client.on("ready", () => {
+  console.log(`🔥 봇 완전 로그인 성공: ${client.user.tag}`);
+});
     .catch((err) => {
       console.log("❌ 봇 로그인 실패:", err.message);
     });
