@@ -22,9 +22,6 @@ const client = new Client({
 client.once("ready", async () => {
   console.log(`🤖 봇 로그인 완료: ${client.user.tag}`);
 
-client.once("ready", async () => {
-  console.log(`🤖 봇 로그인 완료: ${client.user.tag}`);
-
   const channel = await client.channels.fetch(CHANNEL_ID);
   await channel.send("🔥 테스트");
 
