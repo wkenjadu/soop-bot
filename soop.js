@@ -1,18 +1,12 @@
 const axios = require("axios");
 const fs = require("fs");
 
-// ===== 설정 =====
 const TOKEN = process.env.DISCORD_TOKEN;
 const CHANNEL_ID = process.env.CHANNEL_ID;
 const BJ_ID = "breezy25";
 const BJ_NAME = "숩니찡";
 const STATUS_FILE = "status.txt";
 
-console.log("파일 실행 시작");
-console.log("TOKEN 있음?", !!TOKEN);
-console.log("CHANNEL_ID:", CHANNEL_ID);
-
-// ===== 디스코드 =====
 const {
   Client,
   GatewayIntentBits,
@@ -26,32 +20,21 @@ const client = new Client({
   intents: [GatewayIntentBits.Guilds]
 });
 
-// ===== 로그인 완료 =====
-client.once("ready", async () => {
-  console.log(`🤖 봇 로그인 완료: ${client.user.tag}`);
-
-  // 🔥 테스트 메시지 (확인용)
-  try {
-    const testChannel = await client.channels.fetch(CHANNEL_ID);
-    await testChannel.send("🔥 테스트 메시지");
-    console.log("✅ 테스트 메시지 성공");
-  } catch (err) {
-    console.log("❌ 테스트 실패:", err.message);
-  }
-
-  // 방송 체크 실행
+client.once("clientReady", async () => {
+  console.log(`🤖 로그인 완료: ${client.user.tag}`);
   await checkStream();
-
-  // GitHub Actions용 종료
   process.exit(0);
 });
 
-// ===== 방송 체크 =====
 async function checkStream() {
   try {
     let wasLive = false;
+    let isFirstRun = false;
 
-    if (fs.existsSync(STATUS_FILE)) {
+    // status.txt 없으면 최초 실행
+    if (!fs.existsSync(STATUS_FILE)) {
+      isFirstRun = true;
+    } else {
       wasLive = fs.readFileSync(STATUS_FILE, "utf8").trim() === "true";
     }
 
@@ -70,8 +53,9 @@ async function checkStream() {
 
     console.log(`[체크] 방송 상태: ${isLive ? "ON" : "OFF"}`);
 
-    // 🔴 방송 시작 감지
-    if (isLive && !wasLive) {
+    // 🔥 핵심 조건
+    if (isLive && (!wasLive || isFirstRun)) {
+
       const channel = await client.channels.fetch(CHANNEL_ID);
 
       const title = broadData?.broad_title || "방송 시작!";
@@ -98,15 +82,14 @@ async function checkStream() {
       );
 
       await channel.send({
-        content: "@everyone 🟣 방송 시작!",
+        content: "@everyone 🟣 방송 중입니다!",
         embeds: [embed],
         components: [row]
       });
 
-      console.log("✅ 방송 알림 전송 완료!");
+      console.log("✅ 알림 전송 완료");
     }
 
-    // 상태 저장
     fs.writeFileSync(STATUS_FILE, String(isLive));
 
   } catch (e) {
@@ -114,12 +97,9 @@ async function checkStream() {
   }
 }
 
-// ===== 로그인 =====
+// 로그인
 if (!TOKEN) {
-  console.log("❌ DISCORD_TOKEN 없음");
+  console.log("❌ 토큰 없음");
 } else {
-  console.log("🔑 로그인 시도");
-  client.login(TOKEN)
-    .then(() => console.log("✅ login() 성공"))
-    .catch(err => console.log("❌ 로그인 실패:", err.message));
+  client.login(TOKEN);
 }
