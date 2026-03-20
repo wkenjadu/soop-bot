@@ -61,7 +61,7 @@ async function checkStream() {
     );
 
     const broadData = res.data?.broad;
-    const isLive = broadData ? (broadData.is_onair === "Y") : false;
+    const isLive = true;
 
     console.log(`[체크] 방송 상태: ${isLive ? "ON" : "OFF"}`);
     console.log("카테고리 관련 값:", {
