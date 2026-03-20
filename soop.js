@@ -13,8 +13,15 @@ const client = new Client({
   intents: [GatewayIntentBits.Guilds]
 });
 
-client.once("ready", () => {
+// ✅ 최신 방식 (경고 제거)
+client.once("clientReady", () => {
   console.log(`🤖 봇 로그인 완료: ${client.user.tag}`);
+
+  checkStream(); // 시작할 때 1번 실행
+
+  setInterval(() => {
+    checkStream();
+  }, 30000); // 30초마다 체크
 });
 
 // 방송 체크 함수
@@ -38,7 +45,9 @@ async function checkStream() {
     );
 
     const broadData = res.data?.broad;
-    const isLive = broadData && broadData.is_onair === "Y";
+
+    // ✅ 핵심 수정 (null 방지)
+    const isLive = broadData ? (broadData.is_onair === "Y") : false;
 
     console.log(`[체크] 방송 상태: ${isLive ? "ON" : "OFF"}`);
 
@@ -50,7 +59,6 @@ async function checkStream() {
       const title = broadData.broad_title || "방송 시작!";
       const category = broadData.broad_cate_name || "카테고리 없음";
 
-      // 썸네일 자동 갱신
       const thumbnail =
         `https://liveimg.afreecatv.com/m/${broadData.broad_no}.jpg?cache=${Date.now()}`;
 
@@ -94,8 +102,8 @@ async function checkStream() {
       console.log("🔴 방송 종료 감지");
     }
 
-    // 상태 저장
-    fs.writeFileSync(STATUS_FILE, isLive.toString());
+    // ✅ 안전 저장 (에러 방지)
+    fs.writeFileSync(STATUS_FILE, String(isLive));
 
   } catch (e) {
     console.log("❌ 에러:", e.message);
@@ -104,14 +112,3 @@ async function checkStream() {
 
 // 봇 로그인
 client.login(TOKEN);
-
-// 봇 준비되면 체크 시작
-client.once("ready", () => {
-
-  checkStream(); // 시작할 때 한번
-
-  setInterval(() => {
-    checkStream();
-  }, 30000); // 30초마다 체크
-
-});
