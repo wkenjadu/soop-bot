@@ -22,12 +22,14 @@ const client = new Client({
 client.once("ready", async () => {
   console.log(`🤖 봇 로그인 완료: ${client.user.tag}`);
 
-  // 🔥 테스트 메시지 보내기
+client.once("ready", async () => {
+  console.log(`🤖 봇 로그인 완료: ${client.user.tag}`);
+
   const channel = await client.channels.fetch(CHANNEL_ID);
   await channel.send("🔥 테스트");
-});
 
   await checkStream();
+});
   process.exit(0); // Actions용 (끝나면 종료)
 });
 
