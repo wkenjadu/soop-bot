@@ -10,8 +10,7 @@ const {
   ButtonStyle
 } = require("discord.js");
 
-// ===== 설정 =====
-const TOKEN = process.env.DISCORD_TOKEN;
+const TOKEN = (process.env.DISCORD_TOKEN || "").trim();
 const CHANNEL_ID = "1418380178358534200";
 const BJ_ID = "breezy25";
 const BJ_NAME = "숩니찡";
@@ -20,29 +19,49 @@ const STATUS_FILE = "status.txt";
 console.log("파일 실행 시작");
 console.log("TOKEN 있음?", !!TOKEN);
 
-// ===== 디스코드 클라이언트 =====
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds]
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages
+  ]
 });
 
-// ===== 웹서버 =====
 const PORT = process.env.PORT || 3000;
 http.createServer((req, res) => {
-  res.writeHead(200, { "Content-Type": "text/plain" });
+  res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
   res.end("Bot running");
-}).listen(PORT, () => {
+}).listen(PORT, "0.0.0.0", () => {
   console.log(`🌐 Web server listening on port ${PORT}`);
 });
 
-// ===== 로그인 완료 =====
-client.once("clientReady", () => {
+client.once("clientReady", async () => {
   console.log(`🤖 봇 로그인 완료: ${client.user.tag}`);
+
+  try {
+    const channel = await client.channels.fetch(CHANNEL_ID);
+    console.log("📨 채널 찾기 성공:", channel?.id);
+    await channel.send("✅ 테스트 메시지");
+    console.log("✅ 테스트 메시지 전송 성공");
+  } catch (e) {
+    console.log("❌ 채널/권한 문제:", e.message);
+  }
 
   checkStream();
   setInterval(checkStream, 30000);
 });
 
-// ===== 방송 체크 =====
+client.on("error", (err) => {
+  console.log("❌ client error:", err.message);
+});
+
+client.on("warn", (msg) => {
+  console.log("⚠️ warn:", msg);
+});
+
+client.on("shardError", (err) => {
+  console.log("❌ shard error:", err.message);
+});
+
 async function checkStream() {
   try {
     let wasLive = false;
@@ -57,24 +76,18 @@ async function checkStream() {
         headers: {
           "User-Agent": "Mozilla/5.0",
           "Referer": `https://ch.sooplive.co.kr/${BJ_ID}`
-        }
+        },
+        timeout: 10000
       }
     );
 
     const broadData = res.data?.broad;
-    const isLive = broadData ? (broadData.is_onair === "Y") : false;
+    const isLive = broadData ? broadData.is_onair === "Y" : false;
 
     console.log(`[체크] 방송 상태: ${isLive ? "ON" : "OFF"}`);
 
     if (isLive && !wasLive) {
-      let channel;
-
-      try {
-        channel = await client.channels.fetch(CHANNEL_ID);
-      } catch {
-        console.log("❌ 채널 오류");
-        return;
-      }
+      const channel = await client.channels.fetch(CHANNEL_ID);
 
       const title = broadData?.broad_title || "방송 시작!";
       const category = broadData?.broad_cate_name || "카테고리 없음";
@@ -109,16 +122,20 @@ async function checkStream() {
     }
 
     fs.writeFileSync(STATUS_FILE, String(isLive));
-
   } catch (e) {
-    console.log("❌ 에러:", e.message);
+    console.log("❌ 에러:", e.response?.status || e.code || e.message, e.message);
   }
 }
 
-// ===== 로그인 =====
 if (!TOKEN) {
   console.log("❌ DISCORD_TOKEN 없음");
 } else {
   console.log("🔑 로그인 시도");
-  client.login(TOKEN);
+  client.login(TOKEN)
+    .then(() => {
+      console.log("✅ login() 호출 성공");
+    })
+    .catch((err) => {
+      console.log("❌ 로그인 실패:", err.message);
+    });
 }
