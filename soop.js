@@ -16,12 +16,25 @@ const {
   ButtonStyle
 } = require("discord.js");
 
+console.log("파일 실행 시작");
+console.log("TOKEN 있음?", !!TOKEN);
+console.log("CHANNEL_ID:", CHANNEL_ID);
+
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
 });
 
 client.once("clientReady", async () => {
   console.log(`🤖 로그인 완료: ${client.user.tag}`);
+
+  try {
+    const testChannel = await client.channels.fetch(CHANNEL_ID);
+    await testChannel.send("🔥 테스트 메시지");
+    console.log("✅ 테스트 메시지 성공");
+  } catch (err) {
+    console.log("❌ 테스트 실패:", err.message);
+  }
+
   await checkStream();
   process.exit(0);
 });
@@ -31,7 +44,6 @@ async function checkStream() {
     let wasLive = false;
     let isFirstRun = false;
 
-    // status.txt 없으면 최초 실행
     if (!fs.existsSync(STATUS_FILE)) {
       isFirstRun = true;
     } else {
@@ -49,17 +61,25 @@ async function checkStream() {
     );
 
     const broadData = res.data?.broad;
-    const isLive = true;
+    const isLive = broadData ? (broadData.is_onair === "Y") : false;
 
     console.log(`[체크] 방송 상태: ${isLive ? "ON" : "OFF"}`);
+    console.log("카테고리 관련 값:", {
+      broad_cate_name: broadData?.broad_cate_name,
+      cate_name: broadData?.cate_name,
+      category: broadData?.category
+    });
 
-    // 🔥 핵심 조건
     if (isLive && (!wasLive || isFirstRun)) {
-
       const channel = await client.channels.fetch(CHANNEL_ID);
 
       const title = broadData?.broad_title || "방송 시작!";
-      const category = broadData?.broad_cate_name || "카테고리 없음";
+      const category =
+        broadData?.broad_cate_name ||
+        broadData?.cate_name ||
+        broadData?.category ||
+        "카테고리 없음";
+
       const thumbnail = `https://liveimg.afreecatv.com/m/${broadData?.broad_no}.jpg?cache=${Date.now()}`;
 
       const embed = new EmbedBuilder()
@@ -82,7 +102,7 @@ async function checkStream() {
       );
 
       await channel.send({
-        content: "@everyone 🟣 방송 중입니다!",
+        content: "@everyone 🟣 실시간 스트리밍 ON 🟣",
         embeds: [embed],
         components: [row]
       });
@@ -91,15 +111,16 @@ async function checkStream() {
     }
 
     fs.writeFileSync(STATUS_FILE, String(isLive));
-
   } catch (e) {
     console.log("❌ 에러:", e.message);
   }
 }
 
-// 로그인
 if (!TOKEN) {
   console.log("❌ 토큰 없음");
 } else {
-  client.login(TOKEN);
+  console.log("🔑 로그인 시도");
+  client.login(TOKEN)
+    .then(() => console.log("✅ login() 성공"))
+    .catch(err => console.log("❌ 로그인 실패:", err.message));
 }
