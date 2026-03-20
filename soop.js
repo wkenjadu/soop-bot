@@ -39,7 +39,7 @@ http.createServer((req, res) => {
 });
 
 // ===== 로그인 이벤트 =====
-client.once("ready", () => {
+client.once("clientReady", () => {
   console.log(`🤖 봇 로그인 완료: ${client.user.tag}`);
 
   checkStream();
@@ -79,12 +79,18 @@ async function checkStream() {
     console.log(`[체크] 방송 상태: ${isLive ? "ON" : "OFF"}`);
 
     if (isLive && !wasLive) {
-      const channel = await client.channels.fetch(CHANNEL_ID);
+      let channel;
+try {
+  channel = await client.channels.fetch(CHANNEL_ID);
+} catch {
+  console.log("❌ 채널 ID 잘못됨");
+  return;
+}
 
-      if (!channel) {
-        console.log("❌ 채널 못찾음");
-        return;
-      }
+if (!channel) {
+  console.log("❌ 채널 없음");
+  return;
+}
 
       const title = broadData.broad_title || "방송 시작!";
       const category = broadData.broad_cate_name || "카테고리 없음";
@@ -138,7 +144,6 @@ if (!TOKEN) {
   console.log("❌ DISCORD_TOKEN 없음");
 } else {
   console.log("🔑 로그인 시도");
-  client.login(TOKEN)
-    .then(() => console.log("✅ login() 호출 성공"))
-    .catch(err => console.log("❌ 로그인 실패:", err.message));
-}
+client.on("clientReady", () => {
+  console.log("🔥 완전 로그인 완료됨");
+});
