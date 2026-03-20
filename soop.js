@@ -12,24 +12,41 @@ console.log("파일 실행 시작");
 console.log("TOKEN 있음?", !!TOKEN);
 console.log("CHANNEL_ID:", CHANNEL_ID);
 
-// ===== 디스코드 클라이언트 =====
-const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
+// ===== 디스코드 =====
+const {
+  Client,
+  GatewayIntentBits,
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle
+} = require("discord.js");
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
 });
 
+// ===== 로그인 완료 =====
 client.once("ready", async () => {
   console.log(`🤖 봇 로그인 완료: ${client.user.tag}`);
 
-  const channel = await client.channels.fetch(CHANNEL_ID);
-  await channel.send("🔥 테스트");
+  // 🔥 테스트 메시지 (확인용)
+  try {
+    const testChannel = await client.channels.fetch(CHANNEL_ID);
+    await testChannel.send("🔥 테스트 메시지");
+    console.log("✅ 테스트 메시지 성공");
+  } catch (err) {
+    console.log("❌ 테스트 실패:", err.message);
+  }
 
+  // 방송 체크 실행
   await checkStream();
-});
-  process.exit(0); // Actions용 (끝나면 종료)
+
+  // GitHub Actions용 종료
+  process.exit(0);
 });
 
+// ===== 방송 체크 =====
 async function checkStream() {
   try {
     let wasLive = false;
@@ -53,6 +70,7 @@ async function checkStream() {
 
     console.log(`[체크] 방송 상태: ${isLive ? "ON" : "OFF"}`);
 
+    // 🔴 방송 시작 감지
     if (isLive && !wasLive) {
       const channel = await client.channels.fetch(CHANNEL_ID);
 
@@ -85,9 +103,10 @@ async function checkStream() {
         components: [row]
       });
 
-      console.log("✅ 알림 보냄");
+      console.log("✅ 방송 알림 전송 완료!");
     }
 
+    // 상태 저장
     fs.writeFileSync(STATUS_FILE, String(isLive));
 
   } catch (e) {
@@ -95,9 +114,12 @@ async function checkStream() {
   }
 }
 
-// 로그인
+// ===== 로그인 =====
 if (!TOKEN) {
   console.log("❌ DISCORD_TOKEN 없음");
 } else {
-  client.login(TOKEN);
+  console.log("🔑 로그인 시도");
+  client.login(TOKEN)
+    .then(() => console.log("✅ login() 성공"))
+    .catch(err => console.log("❌ 로그인 실패:", err.message));
 }
