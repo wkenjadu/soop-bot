@@ -17,19 +17,15 @@ const BJ_ID = "breezy25";
 const BJ_NAME = "숩니찡";
 const STATUS_FILE = "status.txt";
 
-// ===== 디버그 로그 =====
 console.log("파일 실행 시작");
 console.log("TOKEN 있음?", !!TOKEN);
 
 // ===== 디스코드 클라이언트 =====
 const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages
-  ]
+  intents: [GatewayIntentBits.Guilds]
 });
 
-// ===== Render 포트 열기 =====
+// ===== 웹서버 =====
 const PORT = process.env.PORT || 3000;
 http.createServer((req, res) => {
   res.writeHead(200, { "Content-Type": "text/plain" });
@@ -38,20 +34,12 @@ http.createServer((req, res) => {
   console.log(`🌐 Web server listening on port ${PORT}`);
 });
 
-// ===== 로그인 이벤트 =====
+// ===== 로그인 완료 =====
 client.once("clientReady", () => {
   console.log(`🤖 봇 로그인 완료: ${client.user.tag}`);
 
   checkStream();
-
-  setInterval(() => {
-    checkStream();
-  }, 30000);
-});
-
-// ===== 에러 로그 =====
-client.on("error", (err) => {
-  console.log("❌ 클라이언트 에러:", err);
+  setInterval(checkStream, 30000);
 });
 
 // ===== 방송 체크 =====
@@ -80,28 +68,20 @@ async function checkStream() {
 
     if (isLive && !wasLive) {
       let channel;
-try {
-  channel = await client.channels.fetch(CHANNEL_ID);
-} catch {
-  console.log("❌ 채널 ID 잘못됨");
-  return;
-}
 
-if (!channel) {
-  console.log("❌ 채널 없음");
-  return;
-}
+      try {
+        channel = await client.channels.fetch(CHANNEL_ID);
+      } catch {
+        console.log("❌ 채널 오류");
+        return;
+      }
 
-      const title = broadData.broad_title || "방송 시작!";
-      const category = broadData.broad_cate_name || "카테고리 없음";
-      const thumbnail = `https://liveimg.afreecatv.com/m/${broadData.broad_no}.jpg?cache=${Date.now()}`;
+      const title = broadData?.broad_title || "방송 시작!";
+      const category = broadData?.broad_cate_name || "카테고리 없음";
+      const thumbnail = `https://liveimg.afreecatv.com/m/${broadData?.broad_no}.jpg?cache=${Date.now()}`;
 
       const embed = new EmbedBuilder()
         .setColor(0xD59EE8)
-        .setAuthor({
-          name: `${BJ_NAME} 방송 시작!`,
-          iconURL: `https://profile.img.afreecatv.com/LOGO/${BJ_ID.substring(0, 2)}/${BJ_ID}/${BJ_ID}.jpg`
-        })
         .setTitle(`💜 ${title}`)
         .setURL(`https://play.sooplive.co.kr/${BJ_ID}`)
         .addFields({
@@ -128,10 +108,6 @@ if (!channel) {
       console.log("✅ 알림 보냄");
     }
 
-    if (!isLive && wasLive) {
-      console.log("🔴 방송 종료");
-    }
-
     fs.writeFileSync(STATUS_FILE, String(isLive));
 
   } catch (e) {
@@ -144,6 +120,5 @@ if (!TOKEN) {
   console.log("❌ DISCORD_TOKEN 없음");
 } else {
   console.log("🔑 로그인 시도");
-client.on("clientReady", () => {
-  console.log("🔥 완전 로그인 완료됨");
-});
+  client.login(TOKEN);
+}
