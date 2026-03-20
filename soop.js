@@ -1,5 +1,6 @@
 const axios = require("axios");
 const fs = require("fs");
+const http = require("http");
 const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 
 // 환경설정
@@ -13,7 +14,18 @@ const client = new Client({
   intents: [GatewayIntentBits.Guilds]
 });
 
-// ✅ 최신 방식 (경고 제거)
+// Render Web Service용 포트 열기
+const PORT = process.env.PORT || 3000;
+http
+  .createServer((req, res) => {
+    res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
+    res.end("SOOP bot is running");
+  })
+  .listen(PORT, () => {
+    console.log(`🌐 Web server listening on port ${PORT}`);
+  });
+
+// 봇 준비 완료
 client.once("clientReady", () => {
   console.log(`🤖 봇 로그인 완료: ${client.user.tag}`);
 
@@ -27,7 +39,6 @@ client.once("clientReady", () => {
 // 방송 체크 함수
 async function checkStream() {
   try {
-
     let wasLive = false;
 
     if (fs.existsSync(STATUS_FILE)) {
@@ -45,38 +56,31 @@ async function checkStream() {
     );
 
     const broadData = res.data?.broad;
-
-    // ✅ 핵심 수정 (null 방지)
     const isLive = broadData ? (broadData.is_onair === "Y") : false;
 
     console.log(`[체크] 방송 상태: ${isLive ? "ON" : "OFF"}`);
 
     // 방송 시작 감지
     if (isLive && !wasLive) {
-
       const channel = await client.channels.fetch(CHANNEL_ID);
 
       const title = broadData.broad_title || "방송 시작!";
       const category = broadData.broad_cate_name || "카테고리 없음";
-
-      const thumbnail =
-        `https://liveimg.afreecatv.com/m/${broadData.broad_no}.jpg?cache=${Date.now()}`;
+      const thumbnail = `https://liveimg.afreecatv.com/m/${broadData.broad_no}.jpg?cache=${Date.now()}`;
 
       const embed = new EmbedBuilder()
         .setColor(0xD59EE8)
         .setAuthor({
           name: `${BJ_NAME} 방송 시작!`,
-          iconURL: `https://profile.img.afreecatv.com/LOGO/${BJ_ID.substring(0,2)}/${BJ_ID}/${BJ_ID}.jpg`
+          iconURL: `https://profile.img.afreecatv.com/LOGO/${BJ_ID.substring(0, 2)}/${BJ_ID}/${BJ_ID}.jpg`
         })
         .setTitle(`💜 ${title}`)
         .setURL(`https://play.sooplive.co.kr/${BJ_ID}`)
-        .addFields(
-          {
-            name: "📂 방송 카테고리",
-            value: category,
-            inline: true
-          }
-        )
+        .addFields({
+          name: "📂 방송 카테고리",
+          value: category,
+          inline: true
+        })
         .setImage(thumbnail)
         .setFooter({ text: "SOOP Live Checker" })
         .setTimestamp();
@@ -102,13 +106,15 @@ async function checkStream() {
       console.log("🔴 방송 종료 감지");
     }
 
-    // ✅ 안전 저장 (에러 방지)
     fs.writeFileSync(STATUS_FILE, String(isLive));
-
   } catch (e) {
     console.log("❌ 에러:", e.message);
   }
 }
 
 // 봇 로그인
-client.login(TOKEN);
+if (!TOKEN) {
+  console.log("❌ DISCORD_TOKEN 없음");
+} else {
+  client.login(TOKEN);
+}
