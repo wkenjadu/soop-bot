@@ -19,8 +19,13 @@ const client = new Client({
   intents: [GatewayIntentBits.Guilds]
 });
 
-client.once("clientReady", async () => {
+client.once("ready", async () => {
   console.log(`🤖 봇 로그인 완료: ${client.user.tag}`);
+
+  // 🔥 테스트 메시지 보내기
+  const channel = await client.channels.fetch(CHANNEL_ID);
+  await channel.send("🔥 테스트");
+});
 
   await checkStream();
   process.exit(0); // Actions용 (끝나면 종료)
