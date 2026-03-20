@@ -27,14 +27,6 @@ const client = new Client({
 client.once("clientReady", async () => {
   console.log(`🤖 로그인 완료: ${client.user.tag}`);
 
-  try {
-    const testChannel = await client.channels.fetch(CHANNEL_ID);
-    await testChannel.send("🔥 테스트 메시지");
-    console.log("✅ 테스트 메시지 성공");
-  } catch (err) {
-    console.log("❌ 테스트 실패:", err.message);
-  }
-
   await checkStream();
   process.exit(0);
 });
@@ -61,36 +53,22 @@ async function checkStream() {
     );
 
     const broadData = res.data?.broad;
-    const isLive = true;
+    const isLive = broadData ? (broadData.is_onair === "Y") : false;
 
     console.log(`[체크] 방송 상태: ${isLive ? "ON" : "OFF"}`);
-    console.log("카테고리 관련 값:", {
-      broad_cate_name: broadData?.broad_cate_name,
-      cate_name: broadData?.cate_name,
-      category: broadData?.category
-    });
 
+    // 방송 시작 감지 (처음 실행 포함)
     if (isLive && (!wasLive || isFirstRun)) {
+
       const channel = await client.channels.fetch(CHANNEL_ID);
 
       const title = broadData?.broad_title || "방송 시작!";
-      const category =
-        broadData?.broad_cate_name ||
-        broadData?.cate_name ||
-        broadData?.category ||
-        "카테고리 없음";
-
       const thumbnail = `https://liveimg.afreecatv.com/m/${broadData?.broad_no}.jpg?cache=${Date.now()}`;
 
       const embed = new EmbedBuilder()
         .setColor(0xD59EE8)
         .setTitle(`💜 ${title}`)
         .setURL(`https://play.sooplive.co.kr/${BJ_ID}`)
-        .addFields({
-          name: "📂 방송 카테고리",
-          value: category,
-          inline: true
-        })
         .setImage(thumbnail)
         .setTimestamp();
 
@@ -107,17 +85,19 @@ async function checkStream() {
         components: [row]
       });
 
-      console.log("✅ 알림 전송 완료");
+      console.log("✅ 방송 알림 전송 완료");
     }
 
     fs.writeFileSync(STATUS_FILE, String(isLive));
+
   } catch (e) {
     console.log("❌ 에러:", e.message);
   }
 }
 
+// 로그인
 if (!TOKEN) {
-  console.log("❌ 토큰 없음");
+  console.log("❌ DISCORD_TOKEN 없음");
 } else {
   console.log("🔑 로그인 시도");
   client.login(TOKEN)
