@@ -2,7 +2,7 @@ name: SOOP Live Checker
 
 on:
   schedule:
-    - cron: '*/5 * * * *'  # 5분마다 실행 (최소 5분)
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
 
       - run: npm install
 
-      - name: Run node soop.js
+      - name: Run bot
         run: node soop.js
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
