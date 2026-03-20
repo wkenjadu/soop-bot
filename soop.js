@@ -1,65 +1,29 @@
 const axios = require("axios");
 const fs = require("fs");
-const http = require("http");
-const {
-  Client,
-  GatewayIntentBits,
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle
-} = require("discord.js");
 
-const TOKEN = (process.env.DISCORD_TOKEN || "").trim();
-const CHANNEL_ID = "1418380178358534200";
+// ===== 설정 =====
+const TOKEN = process.env.DISCORD_TOKEN;
+const CHANNEL_ID = process.env.CHANNEL_ID;
 const BJ_ID = "breezy25";
 const BJ_NAME = "숩니찡";
 const STATUS_FILE = "status.txt";
 
 console.log("파일 실행 시작");
 console.log("TOKEN 있음?", !!TOKEN);
+console.log("CHANNEL_ID:", CHANNEL_ID);
+
+// ===== 디스코드 클라이언트 =====
+const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 
 const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages
-  ]
-});
-
-const PORT = process.env.PORT || 3000;
-http.createServer((req, res) => {
-  res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
-  res.end("Bot running");
-}).listen(PORT, "0.0.0.0", () => {
-  console.log(`🌐 Web server listening on port ${PORT}`);
+  intents: [GatewayIntentBits.Guilds]
 });
 
 client.once("clientReady", async () => {
   console.log(`🤖 봇 로그인 완료: ${client.user.tag}`);
 
-  try {
-    const channel = await client.channels.fetch(CHANNEL_ID);
-    console.log("📨 채널 찾기 성공:", channel?.id);
-    await channel.send("✅ 테스트 메시지");
-    console.log("✅ 테스트 메시지 전송 성공");
-  } catch (e) {
-    console.log("❌ 채널/권한 문제:", e.message);
-  }
-
-  checkStream();
-  setInterval(checkStream, 30000);
-});
-
-client.on("error", (err) => {
-  console.log("❌ client error:", err.message);
-});
-
-client.on("warn", (msg) => {
-  console.log("⚠️ warn:", msg);
-});
-
-client.on("shardError", (err) => {
-  console.log("❌ shard error:", err.message);
+  await checkStream();
+  process.exit(0); // Actions용 (끝나면 종료)
 });
 
 async function checkStream() {
@@ -76,13 +40,12 @@ async function checkStream() {
         headers: {
           "User-Agent": "Mozilla/5.0",
           "Referer": `https://ch.sooplive.co.kr/${BJ_ID}`
-        },
-        timeout: 10000
+        }
       }
     );
 
     const broadData = res.data?.broad;
-    const isLive = broadData ? broadData.is_onair === "Y" : false;
+    const isLive = broadData ? (broadData.is_onair === "Y") : false;
 
     console.log(`[체크] 방송 상태: ${isLive ? "ON" : "OFF"}`);
 
@@ -122,20 +85,15 @@ async function checkStream() {
     }
 
     fs.writeFileSync(STATUS_FILE, String(isLive));
+
   } catch (e) {
-    console.log("❌ 에러:", e.response?.status || e.code || e.message, e.message);
+    console.log("❌ 에러:", e.message);
   }
 }
 
+// 로그인
 if (!TOKEN) {
   console.log("❌ DISCORD_TOKEN 없음");
 } else {
-  console.log("🔑 로그인 시도");
-  client.login(TOKEN)
-    .then(() => {
-      console.log("✅ login() 호출 성공");
-    })
-    .catch((err) => {
-      console.log("❌ 로그인 실패:", err.message);
-    });
+  client.login(TOKEN);
 }
