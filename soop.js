@@ -26,7 +26,6 @@ const client = new Client({
 
 client.once("clientReady", async () => {
   console.log(`🤖 로그인 완료: ${client.user.tag}`);
-
   await checkStream();
   process.exit(0);
 });
@@ -39,7 +38,8 @@ async function checkStream() {
     if (!fs.existsSync(STATUS_FILE)) {
       isFirstRun = true;
     } else {
-      wasLive = fs.readFileSync(STATUS_FILE, "utf8").trim() === "true";
+      const saved = fs.readFileSync(STATUS_FILE, "utf8").trim();
+      wasLive = saved === "true";
     }
 
     const res = await axios.get(
@@ -53,13 +53,17 @@ async function checkStream() {
     );
 
     const broadData = res.data?.broad;
-  const isLive = broadData && broadData.broad_no;
+
+    // 🔥 디버그
+    console.log("is_onair:", broadData?.is_onair);
+    console.log("broad_no:", broadData?.broad_no);
+
+    // 🔥 핵심 수정 (boolean 보장)
+    const isLive = !!broadData?.broad_no;
 
     console.log(`[체크] 방송 상태: ${isLive ? "ON" : "OFF"}`);
 
-    // 방송 시작 감지 (처음 실행 포함)
     if (isLive && (!wasLive || isFirstRun)) {
-
       const channel = await client.channels.fetch(CHANNEL_ID);
 
       const title = broadData?.broad_title || "방송 시작!";
@@ -88,7 +92,8 @@ async function checkStream() {
       console.log("✅ 방송 알림 전송 완료");
     }
 
-    fs.writeFileSync(STATUS_FILE, String(isLive));
+    // 🔥 항상 true/false만 저장
+    fs.writeFileSync(STATUS_FILE, isLive ? "true" : "false");
 
   } catch (e) {
     console.log("❌ 에러:", e.message);
