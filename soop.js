@@ -42,38 +42,32 @@ async function checkStream() {
       wasLive = saved === "true";
     }
 
+    // 🔥 핵심: status API 사용
     const res = await axios.get(
-      `https://bjapi.afreecatv.com/api/${BJ_ID}/station`,
+      `https://bjapi.afreecatv.com/api/${BJ_ID}/station/status`,
       {
         headers: {
-          "User-Agent": "Mozilla/5.0",
-          "Referer": `https://ch.sooplive.com/${BJ_ID}`
+          "User-Agent": "Mozilla/5.0"
         }
       }
     );
 
-    const broadData = res.data?.broad;
+    console.log("API 응답:", res.data);
 
-    // 🔥 디버그
-    console.log("is_onair:", broadData?.is_onair);
-    console.log("broad_no:", broadData?.broad_no);
-
-    // 🔥 핵심 수정 (boolean 보장)
-    const isLive = !!broadData?.broad_no;
+    // 🔥 방송 여부 판단
+    const isLive = res.data?.broad_status === "ON";
 
     console.log(`[체크] 방송 상태: ${isLive ? "ON" : "OFF"}`);
 
+    // 방송 시작 감지
     if (isLive && (!wasLive || isFirstRun)) {
-      const channel = await client.channels.fetch(CHANNEL_ID);
 
-      const title = broadData?.broad_title || "방송 시작!";
-      const thumbnail = `https://liveimg.afreecatv.com/m/${broadData?.broad_no}.jpg?cache=${Date.now()}`;
+      const channel = await client.channels.fetch(CHANNEL_ID);
 
       const embed = new EmbedBuilder()
         .setColor(0xD59EE8)
-        .setTitle(`💜 ${title}`)
+        .setTitle(`💜 ${BJ_NAME} 방송 시작!`)
         .setURL(`https://play.sooplive.com/${BJ_ID}`)
-        .setImage(thumbnail)
         .setTimestamp();
 
       const row = new ActionRowBuilder().addComponents(
@@ -92,7 +86,7 @@ async function checkStream() {
       console.log("✅ 방송 알림 전송 완료");
     }
 
-    // 🔥 항상 true/false만 저장
+    // 상태 저장
     fs.writeFileSync(STATUS_FILE, isLive ? "true" : "false");
 
   } catch (e) {
