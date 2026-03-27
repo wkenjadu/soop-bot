@@ -16,10 +16,6 @@ const {
   ButtonStyle
 } = require("discord.js");
 
-console.log("파일 실행 시작");
-console.log("TOKEN 있음?", !!TOKEN);
-console.log("CHANNEL_ID:", CHANNEL_ID);
-
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
 });
@@ -38,30 +34,18 @@ async function checkStream() {
     if (!fs.existsSync(STATUS_FILE)) {
       isFirstRun = true;
     } else {
-      const saved = fs.readFileSync(STATUS_FILE, "utf8").trim();
-      wasLive = saved === "true";
+      wasLive = fs.readFileSync(STATUS_FILE, "utf8").trim() === "true";
     }
 
-    // 🔥 핵심: status API 사용
-    const res = await axios.get(
-      `https://bjapi.afreecatv.com/api/${BJ_ID}/station/status`,
-      {
-        headers: {
-          "User-Agent": "Mozilla/5.0"
-        }
-      }
-    );
+    // 🔥 최신 방식: 웹페이지 체크
+    const res = await axios.get(`https://sooplive.com/station/${BJ_ID}`);
+    const html = res.data;
 
-    console.log("API 응답:", res.data);
-
-    // 🔥 방송 여부 판단
-    const isLive = res.data?.broad_status === "ON";
+    const isLive = html.includes("onair");
 
     console.log(`[체크] 방송 상태: ${isLive ? "ON" : "OFF"}`);
 
-    // 방송 시작 감지
     if (isLive && (!wasLive || isFirstRun)) {
-
       const channel = await client.channels.fetch(CHANNEL_ID);
 
       const embed = new EmbedBuilder()
@@ -86,7 +70,6 @@ async function checkStream() {
       console.log("✅ 방송 알림 전송 완료");
     }
 
-    // 상태 저장
     fs.writeFileSync(STATUS_FILE, isLive ? "true" : "false");
 
   } catch (e) {
@@ -94,12 +77,4 @@ async function checkStream() {
   }
 }
 
-// 로그인
-if (!TOKEN) {
-  console.log("❌ DISCORD_TOKEN 없음");
-} else {
-  console.log("🔑 로그인 시도");
-  client.login(TOKEN)
-    .then(() => console.log("✅ login() 성공"))
-    .catch(err => console.log("❌ 로그인 실패:", err.message));
-}
+client.login(TOKEN);
